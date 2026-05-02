@@ -27,6 +27,7 @@ export function useParticles({
   damping,
   repelStrength,
 }: UseParticlesOptions) {
+  const jitterStrength = 0.3
   const particlesRef = useRef<ParticleData[]>([])
   const mouseRef = useRef<MouseState>({ x: 0, y: 0, active: false })
   const [sampledImage, setSampledImage] = useState<SampledImage | null>(null)
@@ -114,6 +115,8 @@ export function useParticles({
           }
         }
 
+        particle.vx += (Math.random() - 0.5) * jitterStrength * delta
+        particle.vy += (Math.random() - 0.5) * jitterStrength * delta
         particle.vx += (particle.originX - particle.x) * stiffness * delta
         particle.vy += (particle.originY - particle.y) * stiffness * delta
         particle.vx *= dampingFactor

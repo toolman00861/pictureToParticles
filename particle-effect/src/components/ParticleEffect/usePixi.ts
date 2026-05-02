@@ -163,7 +163,7 @@ export function usePixi({
           anchorY: 0.5,
           scaleX: particleSize,
           scaleY: particleSize,
-          tint: particle.color ?? particleColor,
+          tint: particle.color || particleColor,
         }),
     )
 
