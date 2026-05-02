@@ -1,4 +1,4 @@
-﻿import { useMemo } from 'react'
+﻿import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react'
 import { useParticles } from './useParticles'
 import { usePixi } from './usePixi'
 import type { ParticleEffectProps } from './types'
@@ -28,6 +28,10 @@ export function ParticleEffect({
   repelStrength = DEFAULT_REPEL_STRENGTH,
   className,
 }: ParticleEffectProps) {
+  const cursorRef = useRef<HTMLDivElement | null>(null)
+  const cursorVisibleRef = useRef(false)
+  const cursorTargetRef = useRef({ x: 0, y: 0, active: false })
+  const cursorCurrentRef = useRef({ x: 0, y: 0 })
   const particles = useParticles({
     imageSrc,
     gap,
@@ -50,30 +54,64 @@ export function ParticleEffect({
     clearMouse: particles.clearMouse,
   })
 
-  const particleCount = particles.sampledImage?.particles.length ?? 0
-  const infoText = useMemo(() => {
-    if (particles.status === 'loading') {
-      return '正在采样图片像素并生成粒子...'
+  useEffect(() => {
+    let frameId = 0
+
+    const animateCursor = () => {
+      const cursor = cursorRef.current
+      const target = cursorTargetRef.current
+      const current = cursorCurrentRef.current
+
+      current.x += (target.x - current.x) * 0.16
+      current.y += (target.y - current.y) * 0.16
+
+      if (cursor) {
+        const scale = target.active ? 1 : 0.72
+        cursor.style.opacity = target.active ? '1' : '0'
+        cursor.style.transform = `translate3d(${current.x}px, ${current.y}px, 0) translate3d(-50%, -50%, 0) scale(${scale})`
+      }
+
+      frameId = window.requestAnimationFrame(animateCursor)
     }
 
-    if (particles.status === 'error') {
-      return particles.error ?? '粒子初始化失败。'
-    }
+    frameId = window.requestAnimationFrame(animateCursor)
 
-    return `粒子数量 ${particleCount.toLocaleString()}  鼠标靠近时会推开粒子，移开后缓慢回归。`
-  }, [particleCount, particles.error, particles.status])
+    return () => {
+      window.cancelAnimationFrame(frameId)
+    }
+  }, [])
+
+  const syncCursor = (event: ReactPointerEvent<HTMLElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect()
+    const x = event.clientX - rect.left
+    const y = event.clientY - rect.top
+
+    cursorTargetRef.current = { x, y, active: true }
+
+    if (!cursorVisibleRef.current) {
+      cursorCurrentRef.current = { x, y }
+      cursorVisibleRef.current = true
+    }
+  }
+
+  const hideCursor = () => {
+    cursorTargetRef.current.active = false
+    cursorVisibleRef.current = false
+  }
 
   return (
-    <section className={className ? `particle-effect ${className}` : 'particle-effect'}>
-      <div className="particle-copy">
-        <p className="eyebrow">PixiJS Particle Sea</p>
-        <h1>图片打散为粒子海</h1>
-        <p className="description">
-          透明区域会被忽略，只保留主体像素。当前实现基于 Canvas 采样 + Pixi 粒子渲染，适合继续调参扩展。
-        </p>
-        <p className="meta">{infoText}</p>
-      </div>
+    <section
+      className={className ? `particle-effect ${className}` : 'particle-effect'}
+      onPointerEnter={syncCursor}
+      onPointerMove={syncCursor}
+      onPointerLeave={hideCursor}
+    >
       <div ref={hostRef} className="particle-stage" aria-label="交互粒子画布" />
+      <div ref={cursorRef} className="orb-cursor" aria-hidden="true">
+        <span className="orb-cursor__halo" />
+        <span className="orb-cursor__ring" />
+        <span className="orb-cursor__core" />
+      </div>
     </section>
   )
 }
