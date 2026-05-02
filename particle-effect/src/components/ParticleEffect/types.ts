@@ -17,9 +17,11 @@ export type SampledImage = {
 export type ParticleEffectProps = {
   imageSrc: string
   gap?: number
+  imageScale?: number
   mouseRadius?: number
   stiffness?: number
   damping?: number
+  jitterStrength?: number
   particleSize?: number
   particleColor?: number
   alphaThreshold?: number

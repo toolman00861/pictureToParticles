@@ -8,11 +8,13 @@ const VIEWPORT_SAMPLE_HEIGHT_RATIO = 1.5
 type UseParticlesOptions = {
   imageSrc: string
   gap: number
+  imageScale: number
   alphaThreshold: number
   mouseRadius: number
   stiffness: number
   damping: number
   repelStrength: number
+  jitterStrength: number
 }
 
 type MouseState = {
@@ -24,13 +26,14 @@ type MouseState = {
 export function useParticles({
   imageSrc,
   gap,
+  imageScale,
   alphaThreshold,
   mouseRadius,
   stiffness,
   damping,
   repelStrength,
+  jitterStrength,
 }: UseParticlesOptions) {
-  const jitterStrength = 0.3
   const particlesRef = useRef<ParticleData[]>([])
   const mouseRef = useRef<MouseState>({ x: 0, y: 0, active: false })
   const [sampledImage, setSampledImage] = useState<SampledImage | null>(null)
@@ -50,6 +53,7 @@ export function useParticles({
         const result = await sampleImageParticles({
           imageSrc,
           gap,
+          imageScale,
           alphaThreshold,
           targetWidth: viewportWidth,
           targetHeight: viewportHeight,
@@ -83,7 +87,7 @@ export function useParticles({
     return () => {
       cancelled = true
     }
-  }, [alphaThreshold, gap, imageSrc])
+  }, [alphaThreshold, gap, imageScale, imageSrc])
 
   const setMousePosition = useCallback((x: number, y: number) => {
     mouseRef.current = { x, y, active: true }
@@ -128,7 +132,7 @@ export function useParticles({
         particle.y += particle.vy * delta
       }
     },
-    [damping, mouseRadius, repelStrength, stiffness],
+    [damping, jitterStrength, mouseRadius, repelStrength, stiffness],
   )
 
   return {

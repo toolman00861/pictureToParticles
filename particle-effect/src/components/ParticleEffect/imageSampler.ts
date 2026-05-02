@@ -14,6 +14,7 @@ const loadImage = (src: string) =>
 type SampleImageOptions = {
   imageSrc: string
   gap: number
+  imageScale: number
   alphaThreshold: number
   targetWidth: number
   targetHeight: number
@@ -22,6 +23,7 @@ type SampleImageOptions = {
 export async function sampleImageParticles({
   imageSrc,
   gap,
+  imageScale,
   alphaThreshold,
   targetWidth,
   targetHeight,
@@ -29,10 +31,8 @@ export async function sampleImageParticles({
   const image = await loadImage(imageSrc)
   const safeWidth = Math.max(1, Math.floor(targetWidth))
   const safeHeight = Math.max(1, Math.floor(targetHeight))
-  const scale = Math.max(
-    0.1,
-    Math.min(safeWidth / image.naturalWidth, safeHeight / image.naturalHeight, MAX_IMAGE_SCALE),
-  )
+  const fitScale = Math.min(safeWidth / image.naturalWidth, safeHeight / image.naturalHeight)
+  const scale = Math.max(0.1, Math.min(fitScale * imageScale, MAX_IMAGE_SCALE))
   const drawWidth = Math.max(1, Math.floor(image.naturalWidth * scale))
   const drawHeight = Math.max(1, Math.floor(image.naturalHeight * scale))
 
