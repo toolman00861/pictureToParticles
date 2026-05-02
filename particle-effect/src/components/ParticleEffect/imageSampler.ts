@@ -1,4 +1,4 @@
-﻿import type { SampledImage } from './types'
+import type { SampledImage } from './types'
 
 const loadImage = (src: string) =>
   new Promise<HTMLImageElement>((resolve, reject) => {
@@ -54,6 +54,9 @@ export async function sampleImageParticles({
   for (let y = 0; y < drawHeight; y += gap) {
     for (let x = 0; x < drawWidth; x += gap) {
       const index = (y * drawWidth + x) * 4
+      const red = data[index]
+      const green = data[index + 1]
+      const blue = data[index + 2]
       const alpha = data[index + 3]
 
       if (alpha <= alphaThreshold) {
@@ -70,6 +73,7 @@ export async function sampleImageParticles({
         originY,
         vx: 0,
         vy: 0,
+        color: (red << 16) | (green << 8) | blue,
       })
     }
   }

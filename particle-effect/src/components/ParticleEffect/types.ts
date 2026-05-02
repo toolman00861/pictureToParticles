@@ -1,10 +1,11 @@
-﻿export type ParticleData = {
+export type ParticleData = {
   x: number
   y: number
   originX: number
   originY: number
   vx: number
   vy: number
+  color: number
 }
 
 export type SampledImage = {

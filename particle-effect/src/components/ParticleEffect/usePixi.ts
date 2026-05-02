@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import {
   Application,
   Graphics,
@@ -163,7 +163,7 @@ export function usePixi({
           anchorY: 0.5,
           scaleX: particleSize,
           scaleY: particleSize,
-          tint: particleColor,
+          tint: particle.color ?? particleColor,
         }),
     )
 
