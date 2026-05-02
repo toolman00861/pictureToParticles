@@ -7,13 +7,13 @@ function App() {
     <main className="app-shell">
       <ParticleEffect className='particle-effect' 
         imageSrc={targetImg}
-        gap={2}
+        gap={5}
         mouseRadius={88}
-        stiffness={0.005}
-        damping={0.85}
-        particleSize={0.5}
+        stiffness={0.0005}
+        damping={0.96}
+        particleSize={2}
         particleColor={0xffffff}
-        repelStrength={1}
+        repelStrength={10}
       />
     </main>
   )

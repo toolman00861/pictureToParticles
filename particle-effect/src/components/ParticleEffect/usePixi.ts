@@ -8,6 +8,32 @@ import {
 } from 'pixi.js'
 import type { ParticleData, SampledImage } from './types'
 
+const GLOW_RADIUS = 6
+const CORE_RADIUS = 1.6
+const PARTICLE_SCALE_FACTOR = 0.18
+
+function createParticleTexture(app: Application): Texture {
+  const glowGraphic = new Graphics()
+    .circle(0, 0, GLOW_RADIUS)
+    .fill({ color: 0xffffff, alpha: 0.08 })
+    .circle(0, 0, GLOW_RADIUS * 0.68)
+    .fill({ color: 0xffffff, alpha: 0.16 })
+    .circle(0, 0, GLOW_RADIUS * 0.42)
+    .fill({ color: 0xffffff, alpha: 0.34 })
+    .circle(0, 0, CORE_RADIUS)
+    .fill({ color: 0xffffff, alpha: 1 })
+
+  const texture = app.renderer.generateTexture({
+    target: glowGraphic,
+    resolution: 2,
+    antialias: true,
+  })
+
+  glowGraphic.destroy()
+
+  return texture
+}
+
 type UsePixiOptions = {
   sampledImage: SampledImage | null
   particlesRef: React.RefObject<ParticleData[]>
@@ -60,9 +86,7 @@ export function usePixi({
       host.appendChild(app.canvas)
       appRef.current = app
 
-      const pointerGraphic = new Graphics().circle(1, 1, 1).fill({ color: 0xffffff })
-      particleTextureRef.current = app.renderer.generateTexture(pointerGraphic)
-      pointerGraphic.destroy()
+      particleTextureRef.current = createParticleTexture(app)
 
       const syncPointer = (event: PointerEvent) => {
         const rect = app.canvas.getBoundingClientRect()
@@ -161,9 +185,9 @@ export function usePixi({
           y: particle.y,
           anchorX: 0.5,
           anchorY: 0.5,
-          scaleX: particleSize,
-          scaleY: particleSize,
-          tint: particle.color || particleColor,
+          scaleX: particleSize * PARTICLE_SCALE_FACTOR,
+          scaleY: particleSize * PARTICLE_SCALE_FACTOR,
+          tint: particle.color ?? particleColor,
         }),
     )
 

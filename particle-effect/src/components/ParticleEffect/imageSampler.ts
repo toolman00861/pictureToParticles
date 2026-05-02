@@ -1,5 +1,7 @@
 import type { SampledImage } from './types'
 
+const MAX_IMAGE_SCALE = 2.6
+
 const loadImage = (src: string) =>
   new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image()
@@ -29,7 +31,7 @@ export async function sampleImageParticles({
   const safeHeight = Math.max(1, Math.floor(targetHeight))
   const scale = Math.max(
     0.1,
-    Math.min(safeWidth / image.naturalWidth, safeHeight / image.naturalHeight, 1.8),
+    Math.min(safeWidth / image.naturalWidth, safeHeight / image.naturalHeight, MAX_IMAGE_SCALE),
   )
   const drawWidth = Math.max(1, Math.floor(image.naturalWidth * scale))
   const drawHeight = Math.max(1, Math.floor(image.naturalHeight * scale))

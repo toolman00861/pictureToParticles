@@ -2,6 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { sampleImageParticles } from './imageSampler'
 import type { ParticleData, SampledImage } from './types'
 
+const VIEWPORT_SAMPLE_WIDTH_RATIO = 1.5
+const VIEWPORT_SAMPLE_HEIGHT_RATIO = 1.5
+
 type UseParticlesOptions = {
   imageSrc: string
   gap: number
@@ -42,8 +45,8 @@ export function useParticles({
         setStatus('loading')
         setError(null)
 
-        const viewportWidth = Math.floor(window.innerWidth * 0.78)
-        const viewportHeight = Math.floor(window.innerHeight * 0.72)
+        const viewportWidth = Math.floor(window.innerWidth * VIEWPORT_SAMPLE_WIDTH_RATIO)
+        const viewportHeight = Math.floor(window.innerHeight * VIEWPORT_SAMPLE_HEIGHT_RATIO)
         const result = await sampleImageParticles({
           imageSrc,
           gap,
