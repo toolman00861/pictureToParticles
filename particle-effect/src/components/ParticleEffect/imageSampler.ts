@@ -49,35 +49,53 @@ export async function sampleImageParticles({
   context.drawImage(image, 0, 0, drawWidth, drawHeight)
 
   const { data } = context.getImageData(0, 0, drawWidth, drawHeight)
-  const particles: SampledImage['particles'] = []
   const halfWidth = drawWidth / 2
   const halfHeight = drawHeight / 2
 
-  for (let y = 0; y < drawHeight; y += gap) {
-    for (let x = 0; x < drawWidth; x += gap) {
-      const index = (y * drawWidth + x) * 4
-      const red = data[index]
-      const green = data[index + 1]
-      const blue = data[index + 2]
-      const alpha = data[index + 3]
+  const collectParticles = (step: number) => {
+    const particles: SampledImage['particles'] = []
 
-      if (alpha <= alphaThreshold) {
-        continue
+    for (let y = 0; y < drawHeight; y += step) {
+      for (let x = 0; x < drawWidth; x += step) {
+        const index = (y * drawWidth + x) * 4
+        const red = data[index]
+        const green = data[index + 1]
+        const blue = data[index + 2]
+        const alpha = data[index + 3]
+
+        if (alpha <= alphaThreshold) {
+          continue
+        }
+
+        const originX = x - halfWidth
+        const originY = y - halfHeight
+
+        particles.push({
+          x: originX,
+          y: originY,
+          originX,
+          originY,
+          vx: 0,
+          vy: 0,
+          color: (red << 16) | (green << 8) | blue,
+        })
       }
-
-      const originX = x - halfWidth
-      const originY = y - halfHeight
-
-      particles.push({
-        x: originX,
-        y: originY,
-        originX,
-        originY,
-        vx: 0,
-        vy: 0,
-        color: (red << 16) | (green << 8) | blue,
-      })
     }
+
+    return particles
+  }
+
+  const primaryStep = Math.max(1, Math.round(gap))
+  let particles = collectParticles(primaryStep)
+
+  // Very small scales combined with a large gap can skip all opaque pixels.
+  // Retry with denser sampling before giving up so the image does not vanish.
+  if (particles.length === 0 && primaryStep > 1) {
+    particles = collectParticles(Math.max(1, Math.floor(primaryStep / 2)))
+  }
+
+  if (particles.length === 0 && primaryStep > 1) {
+    particles = collectParticles(1)
   }
 
   return {
