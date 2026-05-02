@@ -1,4 +1,4 @@
-﻿import heroImg from './assets/hero.png'
+﻿import targetImg from './assets/target.png'
 import ParticleEffect from './components/ParticleEffect'
 import './App.css'
 
@@ -6,7 +6,7 @@ function App() {
   return (
     <main className="app-shell">
       <ParticleEffect
-        imageSrc={heroImg}
+        imageSrc={targetImg}
         gap={3}
         mouseRadius={88}
         stiffness={0.045}
