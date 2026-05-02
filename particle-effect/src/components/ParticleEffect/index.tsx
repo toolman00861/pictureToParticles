@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react'
+﻿import { useEffect, useRef } from 'react'
 import { useParticles } from './useParticles'
 import { usePixi } from './usePixi'
 import type { ParticleEffectProps } from './types'
@@ -28,7 +28,9 @@ export function ParticleEffect({
   repelStrength = DEFAULT_REPEL_STRENGTH,
   className,
 }: ParticleEffectProps) {
-  const cursorRef = useRef<HTMLDivElement | null>(null)
+  const sectionRef = useRef<HTMLElement | null>(null)
+  const cursorRingRef = useRef<HTMLDivElement | null>(null)
+  const cursorCoreRef = useRef<HTMLSpanElement | null>(null)
   const cursorVisibleRef = useRef(false)
   const cursorTargetRef = useRef({ x: 0, y: 0, active: false })
   const cursorCurrentRef = useRef({ x: 0, y: 0 })
@@ -58,17 +60,23 @@ export function ParticleEffect({
     let frameId = 0
 
     const animateCursor = () => {
-      const cursor = cursorRef.current
+      const ring = cursorRingRef.current
+      const core = cursorCoreRef.current
       const target = cursorTargetRef.current
       const current = cursorCurrentRef.current
 
       current.x += (target.x - current.x) * 0.16
       current.y += (target.y - current.y) * 0.16
 
-      if (cursor) {
+      if (ring) {
         const scale = target.active ? 1 : 0.72
-        cursor.style.opacity = target.active ? '1' : '0'
-        cursor.style.transform = `translate3d(${current.x}px, ${current.y}px, 0) translate3d(-50%, -50%, 0) scale(${scale})`
+        ring.style.opacity = target.active ? '1' : '0'
+        ring.style.transform = `translate3d(${current.x}px, ${current.y}px, 0) translate3d(-50%, -50%, 0) scale(${scale})`
+      }
+
+      if (core) {
+        core.style.opacity = target.active ? '1' : '0'
+        core.style.transform = `translate3d(${target.x}px, ${target.y}px, 0) translate3d(-50%, -50%, 0) scale(${target.active ? 1 : 0.72})`
       }
 
       frameId = window.requestAnimationFrame(animateCursor)
@@ -81,37 +89,59 @@ export function ParticleEffect({
     }
   }, [])
 
-  const syncCursor = (event: ReactPointerEvent<HTMLElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect()
-    const x = event.clientX - rect.left
-    const y = event.clientY - rect.top
-
-    cursorTargetRef.current = { x, y, active: true }
-
-    if (!cursorVisibleRef.current) {
-      cursorCurrentRef.current = { x, y }
-      cursorVisibleRef.current = true
+  useEffect(() => {
+    const deactivateCursor = () => {
+      cursorTargetRef.current.active = false
+      cursorVisibleRef.current = false
     }
-  }
 
-  const hideCursor = () => {
-    cursorTargetRef.current.active = false
-    cursorVisibleRef.current = false
-  }
+    const syncCursor = (event: PointerEvent) => {
+      const section = sectionRef.current
+
+      if (!section) {
+        deactivateCursor()
+        return
+      }
+
+      const rect = section.getBoundingClientRect()
+      const x = event.clientX - rect.left
+      const y = event.clientY - rect.top
+      const insideSection =
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom
+
+      if (!insideSection) {
+        deactivateCursor()
+        return
+      }
+
+      cursorTargetRef.current = { x, y, active: true }
+
+      if (!cursorVisibleRef.current) {
+        cursorCurrentRef.current = { x, y }
+        cursorVisibleRef.current = true
+      }
+    }
+
+    window.addEventListener('pointermove', syncCursor)
+    window.addEventListener('pointerleave', deactivateCursor)
+
+    return () => {
+      window.removeEventListener('pointermove', syncCursor)
+      window.removeEventListener('pointerleave', deactivateCursor)
+    }
+  }, [])
 
   return (
-    <section
-      className={className ? `particle-effect ${className}` : 'particle-effect'}
-      onPointerEnter={syncCursor}
-      onPointerMove={syncCursor}
-      onPointerLeave={hideCursor}
-    >
+    <section ref={sectionRef} className={className ? `particle-effect ${className}` : 'particle-effect'}>
       <div ref={hostRef} className="particle-stage" aria-label="交互粒子画布" />
-      <div ref={cursorRef} className="orb-cursor" aria-hidden="true">
+      <div ref={cursorRingRef} className="orb-cursor" aria-hidden="true">
         <span className="orb-cursor__halo" />
         <span className="orb-cursor__ring" />
-        <span className="orb-cursor__core" />
       </div>
+      <span ref={cursorCoreRef} className="orb-cursor__core" aria-hidden="true" />
     </section>
   )
 }
