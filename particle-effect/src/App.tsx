@@ -87,10 +87,14 @@ function App() {
     audioName,
     hasAudio,
     isPlaying,
+    currentTime,
+    duration,
     audioStateRef,
     audioDebug,
     loadAudio,
-    togglePlayback,
+    playAudio,
+    pauseAudio,
+    seekAudio,
   } = useAudio()
 
   useEffect(() => {
@@ -280,7 +284,9 @@ function App() {
         open={debugOpen}
         onToggle={toggleDebug}
         onAudioUpload={handleAudioUpload}
-        onTogglePlayback={() => void togglePlayback()}
+        onPlayAudio={() => void playAudio()}
+        onPauseAudio={pauseAudio}
+        onSeekAudio={seekAudio}
         bass={bass}
         mid={mid}
         treble={treble}
@@ -288,6 +294,8 @@ function App() {
         hasAudio={hasAudio}
         isPlaying={isPlaying}
         audioName={audioName}
+        currentTime={currentTime}
+        duration={duration}
         weightedInput={weightedInput}
         weightedDelta={weightedDelta}
         highlightPulse={highlightPulse}

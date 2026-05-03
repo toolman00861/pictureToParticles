@@ -76,6 +76,8 @@ export function useAudio() {
   const [audioName, setAudioName] = useState('未加载音频')
   const [hasAudio, setHasAudio] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
 
   const stopAnalysis = useCallback(() => {
     window.cancelAnimationFrame(frameRef.current)
@@ -198,15 +200,28 @@ export function useAudio() {
       stopAnalysis()
     }
 
+    const syncTimeline = () => {
+      setCurrentTime(audio.currentTime || 0)
+      setDuration(Number.isFinite(audio.duration) ? audio.duration : 0)
+    }
+
     audio.addEventListener('play', handlePlay)
     audio.addEventListener('pause', handlePause)
     audio.addEventListener('ended', handlePause)
+    audio.addEventListener('loadedmetadata', syncTimeline)
+    audio.addEventListener('durationchange', syncTimeline)
+    audio.addEventListener('timeupdate', syncTimeline)
+    audio.addEventListener('seeked', syncTimeline)
 
     return () => {
       audio.pause()
       audio.removeEventListener('play', handlePlay)
       audio.removeEventListener('pause', handlePause)
       audio.removeEventListener('ended', handlePause)
+      audio.removeEventListener('loadedmetadata', syncTimeline)
+      audio.removeEventListener('durationchange', syncTimeline)
+      audio.removeEventListener('timeupdate', syncTimeline)
+      audio.removeEventListener('seeked', syncTimeline)
       stopAnalysis()
 
       if (objectUrlRef.current) {
@@ -238,6 +253,8 @@ export function useAudio() {
 
       setAudioName(file.name)
       setHasAudio(true)
+      setCurrentTime(0)
+      setDuration(0)
 
       await ensureAudioGraph()
 
@@ -250,24 +267,55 @@ export function useAudio() {
     [ensureAudioGraph],
   )
 
-  const togglePlayback = useCallback(async () => {
+  const playAudio = useCallback(async () => {
     const audio = audioRef.current
     if (!audio || !hasAudio) {
       return
     }
 
-    if (audio.paused) {
-      await ensureAudioGraph()
-      try {
-        await audio.play()
-      } catch {
-        setIsPlaying(false)
-      }
+    await ensureAudioGraph()
+    try {
+      await audio.play()
+    } catch {
+      setIsPlaying(false)
+    }
+  }, [ensureAudioGraph, hasAudio])
+
+  const pauseAudio = useCallback(() => {
+    const audio = audioRef.current
+    if (!audio || !hasAudio) {
       return
     }
 
     audio.pause()
-  }, [ensureAudioGraph, hasAudio])
+  }, [hasAudio])
+
+  const seekAudio = useCallback(
+    (nextTime: number) => {
+      const audio = audioRef.current
+      if (!audio || !hasAudio) {
+        return
+      }
+
+      const nextDuration = Number.isFinite(audio.duration) ? audio.duration : duration
+      const clampedTime = Math.max(0, Math.min(nextTime, nextDuration || 0))
+      audio.currentTime = clampedTime
+      setCurrentTime(clampedTime)
+      if (nextDuration > 0) {
+        setDuration(nextDuration)
+      }
+    },
+    [duration, hasAudio],
+  )
+
+  const togglePlayback = useCallback(async () => {
+    if (isPlaying) {
+      pauseAudio()
+      return
+    }
+
+    await playAudio()
+  }, [isPlaying, pauseAudio, playAudio])
 
   return {
     bass,
@@ -282,6 +330,8 @@ export function useAudio() {
     audioName,
     hasAudio,
     isPlaying,
+    currentTime,
+    duration,
     audioStateRef,
     audioDebug: {
       fftSize: ANALYSER_FFT_SIZE,
@@ -294,6 +344,9 @@ export function useAudio() {
       bassPulseDecay: BASS_PULSE_DECAY,
     },
     loadAudio,
+    playAudio,
+    pauseAudio,
+    seekAudio,
     togglePlayback,
   }
 }

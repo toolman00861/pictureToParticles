@@ -2,7 +2,9 @@ type DebugPanelProps = {
   open: boolean
   onToggle: () => void
   onAudioUpload: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void> | void
-  onTogglePlayback: () => void
+  onPlayAudio: () => void
+  onPauseAudio: () => void
+  onSeekAudio: (time: number) => void
   bass: number
   mid: number
   treble: number
@@ -10,6 +12,8 @@ type DebugPanelProps = {
   hasAudio: boolean
   isPlaying: boolean
   audioName: string
+  currentTime: number
+  duration: number
   weightedInput: number
   weightedDelta: number
   highlightPulse: number
@@ -48,7 +52,9 @@ export function DebugPanel({
   open,
   onToggle,
   onAudioUpload,
-  onTogglePlayback,
+  onPlayAudio,
+  onPauseAudio,
+  onSeekAudio,
   bass,
   mid,
   treble,
@@ -56,6 +62,8 @@ export function DebugPanel({
   hasAudio,
   isPlaying,
   audioName,
+  currentTime,
+  duration,
   weightedInput,
   weightedDelta,
   highlightPulse,
@@ -102,6 +110,12 @@ export function DebugPanel({
     const py = (1 - y) * 100
     return `${px},${py}`
   }).join(' ')
+  const formatTime = (value: number) => {
+    const safeValue = Math.max(0, Math.floor(value))
+    const minutes = Math.floor(safeValue / 60)
+    const seconds = safeValue % 60
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`
+  }
 
   return (
     <section className="debug-dock" aria-label="调试面板">
@@ -130,6 +144,10 @@ export function DebugPanel({
             <span>Status</span>
             <strong>{hasAudio ? (isPlaying ? 'Playing' : 'Paused') : 'Idle'}</strong>
           </div>
+          <div className="debug-row">
+            <span>Timeline</span>
+            <strong>{`${formatTime(currentTime)} / ${formatTime(duration)}`}</strong>
+          </div>
           <div className="upload-row">
             <label className="upload-button">
               <input type="file" accept="audio/*" onChange={onAudioUpload} />
@@ -138,12 +156,35 @@ export function DebugPanel({
             <button
               type="button"
               className="secondary-button"
-              onClick={onTogglePlayback}
+              onClick={onPlayAudio}
               disabled={!hasAudio}
             >
-              {isPlaying ? 'Pause Audio' : 'Play Audio'}
+              Play Audio
+            </button>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={onPauseAudio}
+              disabled={!hasAudio || !isPlaying}
+            >
+              Pause Audio
             </button>
           </div>
+          <label className="slider-control">
+            <span className="slider-control__meta">
+              <span>Progress</span>
+              <strong>{duration > 0 ? `${Math.round((currentTime / duration) * 100)}%` : '0%'}</strong>
+            </span>
+            <input
+              type="range"
+              min="0"
+              max={Math.max(duration, 0)}
+              step="0.01"
+              value={Math.min(currentTime, duration || 0)}
+              onChange={(event) => onSeekAudio(Number(event.target.value))}
+              disabled={!hasAudio || duration <= 0}
+            />
+          </label>
         </div>
 
         <div className="debug-panel__block">
