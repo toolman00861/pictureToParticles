@@ -14,6 +14,11 @@ type ParticleSettings = {
   damping: number
   jitterStrength: number
   bassJitterGain: number
+  midJitterGain: number
+  trebleJitterGain: number
+  audioCurveStrength: number
+  audioCurveCenter: number
+  audioCurveSlope: number
   particleSize: number
   repelStrength: number
 }
@@ -35,6 +40,11 @@ const DEFAULT_PARTICLE_SETTINGS: ParticleSettings = {
   damping: 0.96,
   jitterStrength: 0.4,
   bassJitterGain: 1,
+  midJitterGain: 0.6,
+  trebleJitterGain: 0.35,
+  audioCurveStrength: 1,
+  audioCurveCenter: 0.28,
+  audioCurveSlope: 6,
   particleSize: 2,
   repelStrength: 1,
 }
@@ -46,7 +56,7 @@ const SLIDER_FIELDS: SliderField[] = [
   { key: 'imageScale', label: 'Scale', min: 0.4, max: 1.2, step: 0.05, format: (value) => value.toFixed(2) },
   { key: 'mouseRadius', label: 'Radius', min: 40, max: 180, step: 1, format: (value) => value.toFixed(0) },
   { key: 'stiffness', label: 'Stiffness', min: 0.001, max: 0.04, step: 0.001, format: (value) => value.toFixed(3) },
-  { key: 'damping', label: 'Damping', min: 0.88, max: 0.99, step: 0.01, format: (value) => value.toFixed(2) },
+  { key: 'damping', label: 'Damping', min: 0.5, max: 0.99, step: 0.01, format: (value) => value.toFixed(2) },
   { key: 'jitterStrength', label: 'Jitter', min: 0, max: 1.2, step: 0.05, format: (value) => value.toFixed(2) },
   { key: 'particleSize', label: 'Size', min: 1, max: 4, step: 0.1, format: (value) => value.toFixed(1) },
   { key: 'repelStrength', label: 'Repel', min: 0.2, max: 4, step: 0.1, format: (value) => value.toFixed(1) },
@@ -60,10 +70,12 @@ function App() {
   const [imageReloadVersion, setImageReloadVersion] = useState(0)
   const {
     bass,
+    mid,
     treble,
     bassPulse,
     treblePulse,
     bassDelta,
+    midDelta,
     trebleDelta,
     spectrumBars,
     audioName,
@@ -235,10 +247,12 @@ function App() {
         onAudioUpload={handleAudioUpload}
         onTogglePlayback={() => void togglePlayback()}
         bass={bass}
+        mid={mid}
         treble={treble}
         bassPulse={bassPulse}
         treblePulse={treblePulse}
         bassDelta={bassDelta}
+        midDelta={midDelta}
         trebleDelta={trebleDelta}
         spectrumBars={spectrumBars}
         hasAudio={hasAudio}
@@ -246,7 +260,17 @@ function App() {
         audioName={audioName}
         jitterStrength={settings.jitterStrength}
         bassJitterGain={settings.bassJitterGain}
+        midJitterGain={settings.midJitterGain}
+        trebleJitterGain={settings.trebleJitterGain}
+        audioCurveStrength={settings.audioCurveStrength}
+        audioCurveCenter={settings.audioCurveCenter}
+        audioCurveSlope={settings.audioCurveSlope}
         onBassJitterGainChange={(value) => handleSliderChange('bassJitterGain', value)}
+        onMidJitterGainChange={(value) => handleSliderChange('midJitterGain', value)}
+        onTrebleJitterGainChange={(value) => handleSliderChange('trebleJitterGain', value)}
+        onAudioCurveStrengthChange={(value) => handleSliderChange('audioCurveStrength', value)}
+        onAudioCurveCenterChange={(value) => handleSliderChange('audioCurveCenter', value)}
+        onAudioCurveSlopeChange={(value) => handleSliderChange('audioCurveSlope', value)}
         audioDebug={audioDebug}
       />
     </main>

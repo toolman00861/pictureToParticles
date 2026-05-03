@@ -4,7 +4,7 @@ import type { AudioReactiveState, ParticleData, SampledImage } from './types'
 
 const VIEWPORT_SAMPLE_WIDTH_RATIO = 1.5
 const VIEWPORT_SAMPLE_HEIGHT_RATIO = 1.5
-const BASS_JITTER_SMOOTHING = 0.12
+const AUDIO_JITTER_SMOOTHING = 0.12
 
 type UseParticlesOptions = {
   imageSrc: string
@@ -17,6 +17,11 @@ type UseParticlesOptions = {
   repelStrength: number
   jitterStrength: number
   bassJitterGain: number
+  midJitterGain: number
+  trebleJitterGain: number
+  audioCurveStrength: number
+  audioCurveCenter: number
+  audioCurveSlope: number
   audioStateRef?: React.RefObject<AudioReactiveState>
 }
 
@@ -37,11 +42,18 @@ export function useParticles({
   repelStrength,
   jitterStrength,
   bassJitterGain,
+  midJitterGain,
+  trebleJitterGain,
+  audioCurveStrength,
+  audioCurveCenter,
+  audioCurveSlope,
   audioStateRef,
 }: UseParticlesOptions) {
   const particlesRef = useRef<ParticleData[]>([])
   const mouseRef = useRef<MouseState>({ x: 0, y: 0, active: false })
   const smoothedBassRef = useRef(0)
+  const smoothedMidRef = useRef(0)
+  const smoothedTrebleRef = useRef(0)
   const [sampledImage, setSampledImage] = useState<SampledImage | null>(null)
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -105,13 +117,25 @@ export function useParticles({
 
   const step = useCallback(
     (deltaTime = 1) => {
+      const mapAudioBand = (value: number) => Math.tanh((Math.max(0, value) - audioCurveCenter) * audioCurveSlope) * 0.5 + 0.5
       const delta = Math.min(deltaTime, 2.5)
       const mouse = mouseRef.current
       const radiusSquared = mouseRadius * mouseRadius
       const dampingFactor = Math.pow(damping, delta)
       const bass = audioStateRef?.current?.bass ?? 0
-      smoothedBassRef.current += (bass - smoothedBassRef.current) * BASS_JITTER_SMOOTHING
-      const effectiveJitterStrength = jitterStrength + smoothedBassRef.current * bassJitterGain
+      const mid = audioStateRef?.current?.mid ?? 0
+      const treble = audioStateRef?.current?.treble ?? 0
+      smoothedBassRef.current += (bass - smoothedBassRef.current) * AUDIO_JITTER_SMOOTHING
+      smoothedMidRef.current += (mid - smoothedMidRef.current) * AUDIO_JITTER_SMOOTHING
+      smoothedTrebleRef.current += (treble - smoothedTrebleRef.current) * AUDIO_JITTER_SMOOTHING
+      const mappedBass = mapAudioBand(smoothedBassRef.current)
+      const mappedMid = mapAudioBand(smoothedMidRef.current)
+      const mappedTreble = mapAudioBand(smoothedTrebleRef.current)
+      const effectiveJitterStrength =
+        jitterStrength +
+        mappedBass * bassJitterGain * audioCurveStrength +
+        mappedMid * midJitterGain * audioCurveStrength +
+        mappedTreble * trebleJitterGain * audioCurveStrength
 
       for (const particle of particlesRef.current) {
         if (mouse.active) {
@@ -141,7 +165,20 @@ export function useParticles({
         particle.y += particle.vy * delta
       }
     },
-    [audioStateRef, bassJitterGain, damping, jitterStrength, mouseRadius, repelStrength, stiffness],
+    [
+      audioCurveCenter,
+      audioCurveSlope,
+      audioCurveStrength,
+      audioStateRef,
+      bassJitterGain,
+      damping,
+      jitterStrength,
+      midJitterGain,
+      mouseRadius,
+      repelStrength,
+      stiffness,
+      trebleJitterGain,
+    ],
   )
 
   return {

@@ -487,13 +487,111 @@
     radial-gradient(circle at top, rgba(110, 160, 255, 0.12), transparent 62%);
 }
 
+.debug-legend {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.debug-legend__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(245, 247, 255, 0.96);
+}
+
+.debug-legend__item--low {
+  background: rgba(255, 96, 96, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(255, 96, 96, 0.22);
+}
+
+.debug-legend__item--mid {
+  background: rgba(88, 221, 132, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(88, 221, 132, 0.22);
+}
+
+.debug-legend__item--high {
+  background: rgba(91, 160, 255, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(91, 160, 255, 0.22);
+}
+
 .debug-spectrum__bar {
   display: block;
   width: 100%;
   min-height: 8px;
   border-radius: 999px;
+}
+
+.debug-spectrum__bar--low {
+  background: linear-gradient(180deg, rgba(255, 172, 172, 0.98), rgba(255, 85, 85, 0.38));
+  box-shadow: 0 0 12px rgba(255, 90, 90, 0.22);
+}
+
+.debug-spectrum__bar--mid {
+  background: linear-gradient(180deg, rgba(182, 255, 193, 0.98), rgba(63, 202, 108, 0.38));
+  box-shadow: 0 0 12px rgba(88, 221, 132, 0.2);
+}
+
+.debug-spectrum__bar--high {
   background: linear-gradient(180deg, rgba(200, 223, 255, 0.98), rgba(90, 151, 255, 0.34));
   box-shadow: 0 0 12px rgba(108, 160, 255, 0.2);
+}
+
+.debug-curve {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
+    radial-gradient(circle at top, rgba(110, 160, 255, 0.08), transparent 60%);
+}
+
+.debug-curve__svg {
+  display: block;
+  width: 100%;
+  height: 160px;
+}
+
+.debug-curve__axis {
+  stroke: rgba(197, 211, 248, 0.18);
+  stroke-width: 1;
+}
+
+.debug-curve__line {
+  fill: none;
+  stroke: rgba(237, 242, 255, 0.94);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.debug-curve__point {
+  stroke: rgba(255, 255, 255, 0.9);
+  stroke-width: 0.6;
+}
+
+.debug-curve__point--low {
+  fill: rgba(255, 96, 96, 0.96);
+}
+
+.debug-curve__point--mid {
+  fill: rgba(88, 221, 132, 0.96);
+}
+
+.debug-curve__point--high {
+  fill: rgba(91, 160, 255, 0.96);
+}
+
+.debug-curve__point--weighted {
+  fill: rgba(255, 244, 157, 0.98);
 }
 
 .debug-card {

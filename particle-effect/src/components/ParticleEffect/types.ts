@@ -10,6 +10,7 @@ export type ParticleData = {
 
 export type AudioReactiveState = {
   bass: number
+  mid: number
   treble: number
   bassPulse: number
   treblePulse: number
@@ -30,6 +31,11 @@ export type ParticleEffectProps = {
   damping?: number
   jitterStrength?: number
   bassJitterGain?: number
+  midJitterGain?: number
+  trebleJitterGain?: number
+  audioCurveStrength?: number
+  audioCurveCenter?: number
+  audioCurveSlope?: number
   particleSize?: number
   particleColor?: number
   alphaThreshold?: number

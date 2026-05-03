@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { BASS_BIN_COUNT, TREBLE_START_INDEX, extractBass, extractTreble } from './audioAnalyser'
+import {
+  BASS_BIN_COUNT,
+  MID_END_INDEX,
+  MID_START_INDEX,
+  TREBLE_START_INDEX,
+  extractBass,
+  extractMid,
+  extractTreble,
+} from './audioAnalyser'
 import type { AudioReactiveState } from './types'
 
 const ANALYSER_FFT_SIZE = 512
@@ -47,13 +55,15 @@ export function useAudio() {
   const lastTrebleRef = useRef(0)
   const bassPulseRef = useRef(0)
   const treblePulseRef = useRef(0)
-  const audioStateRef = useRef<AudioReactiveState>({ bass: 0, treble: 0, bassPulse: 0, treblePulse: 0 })
+  const audioStateRef = useRef<AudioReactiveState>({ bass: 0, mid: 0, treble: 0, bassPulse: 0, treblePulse: 0 })
 
   const [bass, setBass] = useState(0)
+  const [mid, setMid] = useState(0)
   const [treble, setTreble] = useState(0)
   const [bassPulse, setBassPulse] = useState(0)
   const [treblePulse, setTreblePulse] = useState(0)
   const [bassDelta, setBassDelta] = useState(0)
+  const [midDelta, setMidDelta] = useState(0)
   const [trebleDelta, setTrebleDelta] = useState(0)
   const [spectrumBars, setSpectrumBars] = useState<number[]>(() =>
     Array.from({ length: SPECTRUM_BAR_COUNT }, () => 0),
@@ -66,6 +76,7 @@ export function useAudio() {
     window.cancelAnimationFrame(frameRef.current)
     frameRef.current = 0
     audioStateRef.current.bass = 0
+    audioStateRef.current.mid = 0
     audioStateRef.current.treble = 0
     audioStateRef.current.bassPulse = 0
     audioStateRef.current.treblePulse = 0
@@ -74,10 +85,12 @@ export function useAudio() {
     bassPulseRef.current = 0
     treblePulseRef.current = 0
     setBass(0)
+    setMid(0)
     setTreble(0)
     setBassPulse(0)
     setTreblePulse(0)
     setBassDelta(0)
+    setMidDelta(0)
     setTrebleDelta(0)
     setSpectrumBars(Array.from({ length: SPECTRUM_BAR_COUNT }, () => 0))
   }, [])
@@ -127,8 +140,10 @@ export function useAudio() {
       analyser.getByteFrequencyData(dataArray)
 
       const nextBass = extractBass(dataArray)
+      const nextMid = extractMid(dataArray)
       const nextTreble = extractTreble(dataArray)
       const bassDelta = nextBass - lastBassRef.current
+      const midDelta = nextMid - (audioStateRef.current.mid ?? 0)
       const trebleDelta = nextTreble - lastTrebleRef.current
       const nextSpectrumBars = buildSpectrumBars(dataArray)
 
@@ -146,14 +161,17 @@ export function useAudio() {
       lastTrebleRef.current = nextTreble
 
       audioStateRef.current.bass = nextBass
+      audioStateRef.current.mid = nextMid
       audioStateRef.current.treble = nextTreble
       audioStateRef.current.bassPulse = bassPulseRef.current
       audioStateRef.current.treblePulse = treblePulseRef.current
       setBass(nextBass)
+      setMid(nextMid)
       setTreble(nextTreble)
       setBassPulse(bassPulseRef.current)
       setTreblePulse(treblePulseRef.current)
       setBassDelta(bassDelta)
+      setMidDelta(midDelta)
       setTrebleDelta(trebleDelta)
       setSpectrumBars(nextSpectrumBars)
 
@@ -254,10 +272,12 @@ export function useAudio() {
 
   return {
     bass,
+    mid,
     treble,
     bassPulse,
     treblePulse,
     bassDelta,
+    midDelta,
     trebleDelta,
     spectrumBars,
     audioName,
@@ -268,6 +288,8 @@ export function useAudio() {
       fftSize: ANALYSER_FFT_SIZE,
       smoothing: ANALYSER_SMOOTHING,
       bassBinCount: BASS_BIN_COUNT,
+      midStartIndex: MID_START_INDEX,
+      midEndIndex: MID_END_INDEX,
       trebleStartIndex: TREBLE_START_INDEX,
       bassPulseThreshold: BASS_PULSE_THRESHOLD,
       treblePulseThreshold: TREBLE_PULSE_THRESHOLD,

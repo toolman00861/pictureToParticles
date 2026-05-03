@@ -10,6 +10,11 @@ const DEFAULT_STIFFNESS = 0.05
 const DEFAULT_DAMPING = 0.85
 const DEFAULT_JITTER_STRENGTH = 0.3
 const DEFAULT_BASS_JITTER_GAIN = 1
+const DEFAULT_MID_JITTER_GAIN = 0.6
+const DEFAULT_TREBLE_JITTER_GAIN = 0.35
+const DEFAULT_AUDIO_CURVE_STRENGTH = 1
+const DEFAULT_AUDIO_CURVE_CENTER = 0.5
+const DEFAULT_AUDIO_CURVE_SLOPE = 6
 const DEFAULT_PARTICLE_SIZE = 1.5
 const DEFAULT_PARTICLE_COLOR = 0xffffff
 const DEFAULT_ALPHA_THRESHOLD = 128
@@ -24,6 +29,11 @@ export function ParticleEffect({
   damping = DEFAULT_DAMPING,
   jitterStrength = DEFAULT_JITTER_STRENGTH,
   bassJitterGain = DEFAULT_BASS_JITTER_GAIN,
+  midJitterGain = DEFAULT_MID_JITTER_GAIN,
+  trebleJitterGain = DEFAULT_TREBLE_JITTER_GAIN,
+  audioCurveStrength = DEFAULT_AUDIO_CURVE_STRENGTH,
+  audioCurveCenter = DEFAULT_AUDIO_CURVE_CENTER,
+  audioCurveSlope = DEFAULT_AUDIO_CURVE_SLOPE,
   particleSize = DEFAULT_PARTICLE_SIZE,
   particleColor = DEFAULT_PARTICLE_COLOR,
   alphaThreshold = DEFAULT_ALPHA_THRESHOLD,
@@ -48,6 +58,11 @@ export function ParticleEffect({
     repelStrength,
     jitterStrength,
     bassJitterGain,
+    midJitterGain,
+    trebleJitterGain,
+    audioCurveStrength,
+    audioCurveCenter,
+    audioCurveSlope,
     audioStateRef,
   })
 
