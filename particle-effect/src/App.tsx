@@ -36,22 +36,22 @@ type SliderField = {
 }
 
 const DEFAULT_PARTICLE_SETTINGS: ParticleSettings = {
-  gap: 3,
+  gap: 5,
   imageScale: 0.9,
   mouseRadius: 88,
   stiffness: 0.001,
   damping: 0.96,
-  jitterStrength: 0.4,
+  jitterStrength: 0.3,
   bassJitterGain: 1,
   midJitterGain: 0.6,
   trebleJitterGain: 0.35,
   audioCurveStrength: 1,
-  audioCurveCenter: 0.28,
+  audioCurveCenter: 0.5,
   audioCurveSlope: 6,
-  highlightPulseThreshold: 0.1,
+  highlightPulseThreshold: 0.05,
   highlightPulseDecay: 0.86,
-  highlightFlashRatio: 0.05,
-  particleSize: 2,
+  highlightFlashRatio: 0.01,
+  particleSize: 1.2,
   repelStrength: 1,
 }
 

@@ -3,7 +3,7 @@ import { useParticles } from './useParticles'
 import { usePixi } from './usePixi'
 import type { ParticleEffectProps } from './types'
 
-const DEFAULT_GAP = 3
+const DEFAULT_GAP = 5
 const DEFAULT_IMAGE_SCALE = 1
 const DEFAULT_MOUSE_RADIUS = 80
 const DEFAULT_STIFFNESS = 0.05
@@ -15,8 +15,8 @@ const DEFAULT_TREBLE_JITTER_GAIN = 0.35
 const DEFAULT_AUDIO_CURVE_STRENGTH = 1
 const DEFAULT_AUDIO_CURVE_CENTER = 0.5
 const DEFAULT_AUDIO_CURVE_SLOPE = 6
-const DEFAULT_HIGHLIGHT_FLASH_RATIO = 0.05
-const DEFAULT_PARTICLE_SIZE = 1.5
+const DEFAULT_HIGHLIGHT_FLASH_RATIO = 0.01
+const DEFAULT_PARTICLE_SIZE = 1.2
 const DEFAULT_PARTICLE_COLOR = 0xffffff
 const DEFAULT_ALPHA_THRESHOLD = 128
 const DEFAULT_REPEL_STRENGTH = 3.8

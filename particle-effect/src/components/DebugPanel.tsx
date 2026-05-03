@@ -238,7 +238,7 @@ export function DebugPanel({
             </span>
             <input
               type="range"
-              min="0"
+              min="0.01"
               max="0.5"
               step="0.01"
               value={highlightPulseThreshold}
