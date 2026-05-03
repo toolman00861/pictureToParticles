@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import targetImg from './assets/target.png'
 import TopNav from './components/TopNav'
 import DebugPanel from './components/DebugPanel'
@@ -21,6 +21,7 @@ type ParticleSettings = {
   audioCurveSlope: number
   highlightPulseThreshold: number
   highlightPulseDecay: number
+  highlightFlashRatio: number
   particleSize: number
   repelStrength: number
 }
@@ -49,6 +50,7 @@ const DEFAULT_PARTICLE_SETTINGS: ParticleSettings = {
   audioCurveSlope: 6,
   highlightPulseThreshold: 0.1,
   highlightPulseDecay: 0.86,
+  highlightFlashRatio: 0.05,
   particleSize: 2,
   repelStrength: 1,
 }
@@ -73,15 +75,14 @@ function App() {
   const [uploadedImage, setUploadedImage] = useState<{ src: string; name: string } | null>(null)
   const [imageReloadVersion, setImageReloadVersion] = useState(0)
   const [highlightPulse, setHighlightPulse] = useState(0)
+  const [highlightTriggerId, setHighlightTriggerId] = useState(0)
+  const [weightedDelta, setWeightedDelta] = useState(0)
+  const previousWeightedInputRef = useRef(0)
+  const highlightTriggerArmedRef = useRef(true)
   const {
     bass,
     mid,
     treble,
-    bassPulse,
-    treblePulse,
-    bassDelta,
-    midDelta,
-    trebleDelta,
     spectrumBars,
     audioName,
     hasAudio,
@@ -110,23 +111,30 @@ function App() {
     totalGain > 0
       ? (bass * settings.bassJitterGain + mid * settings.midJitterGain + treble * settings.trebleJitterGain) / totalGain
       : 0
-  const weightedDelta =
-    totalGain > 0
-      ? (bassDelta * settings.bassJitterGain + midDelta * settings.midJitterGain + trebleDelta * settings.trebleJitterGain) / totalGain
-      : 0
 
   useEffect(() => {
+    const nextWeightedDelta = Math.max(0, weightedInput - previousWeightedInputRef.current)
+    const aboveThreshold = nextWeightedDelta > settings.highlightPulseThreshold
+    setWeightedDelta(nextWeightedDelta)
+    if (aboveThreshold && highlightTriggerArmedRef.current) {
+      setHighlightTriggerId((current) => current + 1)
+      highlightTriggerArmedRef.current = false
+    } else if (!aboveThreshold) {
+      highlightTriggerArmedRef.current = true
+    }
     setHighlightPulse((current) => {
-      const nextPulse = weightedDelta > settings.highlightPulseThreshold ? 1 : current * settings.highlightPulseDecay
+      const nextPulse = aboveThreshold ? 1 : current * settings.highlightPulseDecay
       return Math.max(0, Math.min(1, nextPulse))
     })
-  }, [settings.highlightPulseDecay, settings.highlightPulseThreshold, weightedDelta])
+    previousWeightedInputRef.current = weightedInput
+  }, [settings.highlightPulseDecay, settings.highlightPulseThreshold, weightedInput])
 
   useEffect(() => {
     audioStateRef.current.weightedInput = weightedInput
     audioStateRef.current.weightedDelta = weightedDelta
     audioStateRef.current.highlightPulse = highlightPulse
-  }, [audioStateRef, highlightPulse, weightedDelta, weightedInput])
+    audioStateRef.current.highlightTriggerId = highlightTriggerId
+  }, [audioStateRef, highlightPulse, highlightTriggerId, weightedDelta, weightedInput])
 
   const sliderItems = useMemo(
     () =>
@@ -292,6 +300,7 @@ function App() {
         audioCurveSlope={settings.audioCurveSlope}
         highlightPulseThreshold={settings.highlightPulseThreshold}
         highlightPulseDecay={settings.highlightPulseDecay}
+        highlightFlashRatio={settings.highlightFlashRatio}
         onBassJitterGainChange={(value) => handleSliderChange('bassJitterGain', value)}
         onMidJitterGainChange={(value) => handleSliderChange('midJitterGain', value)}
         onTrebleJitterGainChange={(value) => handleSliderChange('trebleJitterGain', value)}
@@ -300,6 +309,7 @@ function App() {
         onAudioCurveSlopeChange={(value) => handleSliderChange('audioCurveSlope', value)}
         onHighlightPulseThresholdChange={(value) => handleSliderChange('highlightPulseThreshold', value)}
         onHighlightPulseDecayChange={(value) => handleSliderChange('highlightPulseDecay', value)}
+        onHighlightFlashRatioChange={(value) => handleSliderChange('highlightFlashRatio', value)}
         audioDebug={audioDebug}
       />
     </main>

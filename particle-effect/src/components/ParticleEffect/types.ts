@@ -17,6 +17,7 @@ export type AudioReactiveState = {
   weightedInput: number
   weightedDelta: number
   highlightPulse: number
+  highlightTriggerId: number
 }
 
 export type SampledImage = {
@@ -41,6 +42,7 @@ export type ParticleEffectProps = {
   audioCurveSlope?: number
   highlightPulseThreshold?: number
   highlightPulseDecay?: number
+  highlightFlashRatio?: number
   particleSize?: number
   particleColor?: number
   alphaThreshold?: number

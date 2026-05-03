@@ -22,6 +22,7 @@ type DebugPanelProps = {
   audioCurveSlope: number
   highlightPulseThreshold: number
   highlightPulseDecay: number
+  highlightFlashRatio: number
   onBassJitterGainChange: (value: string) => void
   onMidJitterGainChange: (value: string) => void
   onTrebleJitterGainChange: (value: string) => void
@@ -30,6 +31,7 @@ type DebugPanelProps = {
   onAudioCurveSlopeChange: (value: string) => void
   onHighlightPulseThresholdChange: (value: string) => void
   onHighlightPulseDecayChange: (value: string) => void
+  onHighlightFlashRatioChange: (value: string) => void
   audioDebug: {
     fftSize: number
     smoothing: number
@@ -66,6 +68,7 @@ export function DebugPanel({
   audioCurveSlope,
   highlightPulseThreshold,
   highlightPulseDecay,
+  highlightFlashRatio,
   onBassJitterGainChange,
   onMidJitterGainChange,
   onTrebleJitterGainChange,
@@ -74,6 +77,7 @@ export function DebugPanel({
   onAudioCurveSlopeChange,
   onHighlightPulseThresholdChange,
   onHighlightPulseDecayChange,
+  onHighlightFlashRatioChange,
   audioDebug,
 }: DebugPanelProps) {
   const mapAudioBand = (value: number) => Math.tanh((Math.max(0, value) - audioCurveCenter) * audioCurveSlope) * 0.5 + 0.5
@@ -255,6 +259,20 @@ export function DebugPanel({
               onChange={(event) => onHighlightPulseDecayChange(event.target.value)}
             />
           </label>
+          <label className="slider-control">
+            <span className="slider-control__meta">
+              <span>Highlight Ratio</span>
+              <strong>{`${(highlightFlashRatio * 100).toFixed(0)}%`}</strong>
+            </span>
+            <input
+              type="range"
+              min="0.01"
+              max="0.3"
+              step="0.01"
+              value={highlightFlashRatio}
+              onChange={(event) => onHighlightFlashRatioChange(event.target.value)}
+            />
+          </label>
         </div>
 
         <div className="debug-panel__block">
@@ -322,6 +340,10 @@ export function DebugPanel({
             <strong>{highlightPulse.toFixed(3)}</strong>
           </div>
           <div className="debug-card">
+            <span>Highlight Ratio</span>
+            <strong>{`${(highlightFlashRatio * 100).toFixed(0)}%`}</strong>
+          </div>
+          <div className="debug-card">
             <span>Low Share</span>
             <strong>{lowShare.toFixed(3)}</strong>
           </div>
@@ -387,6 +409,10 @@ export function DebugPanel({
           <div className="debug-row">
             <span>Highlight Decay</span>
             <strong>{highlightPulseDecay.toFixed(2)}</strong>
+          </div>
+          <div className="debug-row">
+            <span>Highlight Ratio</span>
+            <strong>{`${(highlightFlashRatio * 100).toFixed(0)}%`}</strong>
           </div>
         </div>
 

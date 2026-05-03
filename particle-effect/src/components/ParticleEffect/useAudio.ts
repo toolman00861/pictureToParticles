@@ -60,6 +60,7 @@ export function useAudio() {
     weightedInput: 0,
     weightedDelta: 0,
     highlightPulse: 0,
+    highlightTriggerId: 0,
   })
 
   const [bass, setBass] = useState(0)
@@ -87,6 +88,7 @@ export function useAudio() {
     audioStateRef.current.weightedInput = 0
     audioStateRef.current.weightedDelta = 0
     audioStateRef.current.highlightPulse = 0
+    audioStateRef.current.highlightTriggerId = 0
     lastBassRef.current = 0
     bassPulseRef.current = 0
     setBass(0)

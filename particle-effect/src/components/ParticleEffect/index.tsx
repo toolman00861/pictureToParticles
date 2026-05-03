@@ -15,7 +15,7 @@ const DEFAULT_TREBLE_JITTER_GAIN = 0.35
 const DEFAULT_AUDIO_CURVE_STRENGTH = 1
 const DEFAULT_AUDIO_CURVE_CENTER = 0.5
 const DEFAULT_AUDIO_CURVE_SLOPE = 6
-const DEFAULT_HIGHLIGHT_PULSE_THRESHOLD = 0.1
+const DEFAULT_HIGHLIGHT_FLASH_RATIO = 0.05
 const DEFAULT_PARTICLE_SIZE = 1.5
 const DEFAULT_PARTICLE_COLOR = 0xffffff
 const DEFAULT_ALPHA_THRESHOLD = 128
@@ -35,7 +35,7 @@ export function ParticleEffect({
   audioCurveStrength = DEFAULT_AUDIO_CURVE_STRENGTH,
   audioCurveCenter = DEFAULT_AUDIO_CURVE_CENTER,
   audioCurveSlope = DEFAULT_AUDIO_CURVE_SLOPE,
-  highlightPulseThreshold = DEFAULT_HIGHLIGHT_PULSE_THRESHOLD,
+  highlightFlashRatio = DEFAULT_HIGHLIGHT_FLASH_RATIO,
   particleSize = DEFAULT_PARTICLE_SIZE,
   particleColor = DEFAULT_PARTICLE_COLOR,
   alphaThreshold = DEFAULT_ALPHA_THRESHOLD,
@@ -74,7 +74,7 @@ export function ParticleEffect({
     particleColor,
     particleSize,
     audioStateRef,
-    highlightPulseThreshold,
+    highlightFlashRatio,
     step: particles.step,
     setMousePosition: particles.setMousePosition,
     clearMouse: particles.clearMouse,
