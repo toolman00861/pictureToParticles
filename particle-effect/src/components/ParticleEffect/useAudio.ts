@@ -12,8 +12,6 @@ import type { AudioReactiveState } from './types'
 
 const ANALYSER_FFT_SIZE = 512
 const ANALYSER_SMOOTHING = 0.72
-const TREBLE_PULSE_THRESHOLD = 0.15
-const TREBLE_PULSE_DECAY = 0.85
 const BASS_PULSE_THRESHOLD = 0.2
 const BASS_PULSE_DECAY = 0.8
 const SPECTRUM_BAR_COUNT = 32
@@ -52,16 +50,22 @@ export function useAudio() {
   const objectUrlRef = useRef<string | null>(null)
   const frameRef = useRef(0)
   const lastBassRef = useRef(0)
-  const lastTrebleRef = useRef(0)
   const bassPulseRef = useRef(0)
-  const treblePulseRef = useRef(0)
-  const audioStateRef = useRef<AudioReactiveState>({ bass: 0, mid: 0, treble: 0, bassPulse: 0, treblePulse: 0 })
+  const audioStateRef = useRef<AudioReactiveState>({
+    bass: 0,
+    mid: 0,
+    treble: 0,
+    bassPulse: 0,
+    treblePulse: 0,
+    weightedInput: 0,
+    weightedDelta: 0,
+    highlightPulse: 0,
+  })
 
   const [bass, setBass] = useState(0)
   const [mid, setMid] = useState(0)
   const [treble, setTreble] = useState(0)
   const [bassPulse, setBassPulse] = useState(0)
-  const [treblePulse, setTreblePulse] = useState(0)
   const [bassDelta, setBassDelta] = useState(0)
   const [midDelta, setMidDelta] = useState(0)
   const [trebleDelta, setTrebleDelta] = useState(0)
@@ -80,15 +84,15 @@ export function useAudio() {
     audioStateRef.current.treble = 0
     audioStateRef.current.bassPulse = 0
     audioStateRef.current.treblePulse = 0
+    audioStateRef.current.weightedInput = 0
+    audioStateRef.current.weightedDelta = 0
+    audioStateRef.current.highlightPulse = 0
     lastBassRef.current = 0
-    lastTrebleRef.current = 0
     bassPulseRef.current = 0
-    treblePulseRef.current = 0
     setBass(0)
     setMid(0)
     setTreble(0)
     setBassPulse(0)
-    setTreblePulse(0)
     setBassDelta(0)
     setMidDelta(0)
     setTrebleDelta(0)
@@ -144,32 +148,25 @@ export function useAudio() {
       const nextTreble = extractTreble(dataArray)
       const bassDelta = nextBass - lastBassRef.current
       const midDelta = nextMid - (audioStateRef.current.mid ?? 0)
-      const trebleDelta = nextTreble - lastTrebleRef.current
+      const trebleDelta = nextTreble - audioStateRef.current.treble
       const nextSpectrumBars = buildSpectrumBars(dataArray)
 
       if (bassDelta > BASS_PULSE_THRESHOLD) {
         bassPulseRef.current = 1
       }
 
-      if (trebleDelta > TREBLE_PULSE_THRESHOLD) {
-        treblePulseRef.current = 1
-      }
-
       bassPulseRef.current *= BASS_PULSE_DECAY
-      treblePulseRef.current *= TREBLE_PULSE_DECAY
       lastBassRef.current = nextBass
-      lastTrebleRef.current = nextTreble
 
       audioStateRef.current.bass = nextBass
       audioStateRef.current.mid = nextMid
       audioStateRef.current.treble = nextTreble
       audioStateRef.current.bassPulse = bassPulseRef.current
-      audioStateRef.current.treblePulse = treblePulseRef.current
+      audioStateRef.current.treblePulse = 0
       setBass(nextBass)
       setMid(nextMid)
       setTreble(nextTreble)
       setBassPulse(bassPulseRef.current)
-      setTreblePulse(treblePulseRef.current)
       setBassDelta(bassDelta)
       setMidDelta(midDelta)
       setTrebleDelta(trebleDelta)
@@ -275,7 +272,7 @@ export function useAudio() {
     mid,
     treble,
     bassPulse,
-    treblePulse,
+    treblePulse: 0,
     bassDelta,
     midDelta,
     trebleDelta,
@@ -292,9 +289,7 @@ export function useAudio() {
       midEndIndex: MID_END_INDEX,
       trebleStartIndex: TREBLE_START_INDEX,
       bassPulseThreshold: BASS_PULSE_THRESHOLD,
-      treblePulseThreshold: TREBLE_PULSE_THRESHOLD,
       bassPulseDecay: BASS_PULSE_DECAY,
-      treblePulseDecay: TREBLE_PULSE_DECAY,
     },
     loadAudio,
     togglePlayback,

@@ -55,6 +55,7 @@ type UsePixiOptions = {
   particleColor: number
   particleSize: number
   audioStateRef?: React.RefObject<AudioReactiveState>
+  highlightPulseThreshold: number
   step: (deltaTime?: number) => void
   setMousePosition: (x: number, y: number) => void
   clearMouse: () => void
@@ -66,6 +67,7 @@ export function usePixi({
   particleColor,
   particleSize,
   audioStateRef,
+  highlightPulseThreshold,
   step,
   setMousePosition,
   clearMouse,
@@ -133,10 +135,11 @@ export function usePixi({
         const container = particleContainerRef.current
         const runtimeParticles = particlesRef.current
         const pixiParticles = pixiParticlesRef.current
-        const treble = audioStateRef?.current?.treble ?? 0
-        const treblePulse = audioStateRef?.current?.treblePulse ?? 0
-        const alpha = 0.4 + treblePulse * 0.6
-        const pulseScale = 1 + treblePulse * TREBLE_PULSE_SCALE_BOOST
+        const weightedInput = audioStateRef?.current?.weightedInput ?? 0
+        const weightedDelta = audioStateRef?.current?.weightedDelta ?? 0
+        const highlightPulse = audioStateRef?.current?.highlightPulse ?? 0
+        const alpha = 0.4 + highlightPulse * 0.6
+        const pulseScale = 1 + highlightPulse * TREBLE_PULSE_SCALE_BOOST
 
         if (!container || runtimeParticles.length === 0 || pixiParticles.length === 0) {
           return
@@ -159,7 +162,10 @@ export function usePixi({
           pixiParticle.alpha = alpha
           pixiParticle.scaleX = particleSize * PARTICLE_SCALE_FACTOR * pulseScale
           pixiParticle.scaleY = particleSize * PARTICLE_SCALE_FACTOR * pulseScale
-          pixiParticle.tint = brightenColor(runtimeParticle.color ?? particleColor, treblePulse * 0.9 + treble * 0.2)
+          pixiParticle.tint = brightenColor(
+            runtimeParticle.color ?? particleColor,
+            highlightPulse * 0.88 + weightedInput * 0.18 + (weightedDelta > highlightPulseThreshold ? 0.08 : 0),
+          )
         }
       })
     }
@@ -177,7 +183,16 @@ export function usePixi({
       appRef.current?.destroy({ removeView: true }, true)
       appRef.current = null
     }
-  }, [audioStateRef, clearMouse, particleColor, particleSize, particlesRef, setMousePosition, step])
+  }, [
+    audioStateRef,
+    clearMouse,
+    highlightPulseThreshold,
+    particleColor,
+    particleSize,
+    particlesRef,
+    setMousePosition,
+    step,
+  ])
 
   useEffect(() => {
     const app = appRef.current

@@ -14,6 +14,9 @@ export type AudioReactiveState = {
   treble: number
   bassPulse: number
   treblePulse: number
+  weightedInput: number
+  weightedDelta: number
+  highlightPulse: number
 }
 
 export type SampledImage = {
@@ -36,6 +39,8 @@ export type ParticleEffectProps = {
   audioCurveStrength?: number
   audioCurveCenter?: number
   audioCurveSlope?: number
+  highlightPulseThreshold?: number
+  highlightPulseDecay?: number
   particleSize?: number
   particleColor?: number
   alphaThreshold?: number

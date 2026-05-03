@@ -19,6 +19,8 @@ type ParticleSettings = {
   audioCurveStrength: number
   audioCurveCenter: number
   audioCurveSlope: number
+  highlightPulseThreshold: number
+  highlightPulseDecay: number
   particleSize: number
   repelStrength: number
 }
@@ -45,6 +47,8 @@ const DEFAULT_PARTICLE_SETTINGS: ParticleSettings = {
   audioCurveStrength: 1,
   audioCurveCenter: 0.28,
   audioCurveSlope: 6,
+  highlightPulseThreshold: 0.1,
+  highlightPulseDecay: 0.86,
   particleSize: 2,
   repelStrength: 1,
 }
@@ -68,6 +72,7 @@ function App() {
   const [settings, setSettings] = useState(DEFAULT_PARTICLE_SETTINGS)
   const [uploadedImage, setUploadedImage] = useState<{ src: string; name: string } | null>(null)
   const [imageReloadVersion, setImageReloadVersion] = useState(0)
+  const [highlightPulse, setHighlightPulse] = useState(0)
   const {
     bass,
     mid,
@@ -100,6 +105,28 @@ function App() {
   const toggleSettings = () => setSettingsOpen((open) => !open)
   const toggleDebug = () => setDebugOpen((open) => !open)
   const reloadImage = () => setImageReloadVersion((version) => version + 1)
+  const totalGain = settings.bassJitterGain + settings.midJitterGain + settings.trebleJitterGain
+  const weightedInput =
+    totalGain > 0
+      ? (bass * settings.bassJitterGain + mid * settings.midJitterGain + treble * settings.trebleJitterGain) / totalGain
+      : 0
+  const weightedDelta =
+    totalGain > 0
+      ? (bassDelta * settings.bassJitterGain + midDelta * settings.midJitterGain + trebleDelta * settings.trebleJitterGain) / totalGain
+      : 0
+
+  useEffect(() => {
+    setHighlightPulse((current) => {
+      const nextPulse = weightedDelta > settings.highlightPulseThreshold ? 1 : current * settings.highlightPulseDecay
+      return Math.max(0, Math.min(1, nextPulse))
+    })
+  }, [settings.highlightPulseDecay, settings.highlightPulseThreshold, weightedDelta])
+
+  useEffect(() => {
+    audioStateRef.current.weightedInput = weightedInput
+    audioStateRef.current.weightedDelta = weightedDelta
+    audioStateRef.current.highlightPulse = highlightPulse
+  }, [audioStateRef, highlightPulse, weightedDelta, weightedInput])
 
   const sliderItems = useMemo(
     () =>
@@ -249,15 +276,13 @@ function App() {
         bass={bass}
         mid={mid}
         treble={treble}
-        bassPulse={bassPulse}
-        treblePulse={treblePulse}
-        bassDelta={bassDelta}
-        midDelta={midDelta}
-        trebleDelta={trebleDelta}
         spectrumBars={spectrumBars}
         hasAudio={hasAudio}
         isPlaying={isPlaying}
         audioName={audioName}
+        weightedInput={weightedInput}
+        weightedDelta={weightedDelta}
+        highlightPulse={highlightPulse}
         jitterStrength={settings.jitterStrength}
         bassJitterGain={settings.bassJitterGain}
         midJitterGain={settings.midJitterGain}
@@ -265,12 +290,16 @@ function App() {
         audioCurveStrength={settings.audioCurveStrength}
         audioCurveCenter={settings.audioCurveCenter}
         audioCurveSlope={settings.audioCurveSlope}
+        highlightPulseThreshold={settings.highlightPulseThreshold}
+        highlightPulseDecay={settings.highlightPulseDecay}
         onBassJitterGainChange={(value) => handleSliderChange('bassJitterGain', value)}
         onMidJitterGainChange={(value) => handleSliderChange('midJitterGain', value)}
         onTrebleJitterGainChange={(value) => handleSliderChange('trebleJitterGain', value)}
         onAudioCurveStrengthChange={(value) => handleSliderChange('audioCurveStrength', value)}
         onAudioCurveCenterChange={(value) => handleSliderChange('audioCurveCenter', value)}
         onAudioCurveSlopeChange={(value) => handleSliderChange('audioCurveSlope', value)}
+        onHighlightPulseThresholdChange={(value) => handleSliderChange('highlightPulseThreshold', value)}
+        onHighlightPulseDecayChange={(value) => handleSliderChange('highlightPulseDecay', value)}
         audioDebug={audioDebug}
       />
     </main>

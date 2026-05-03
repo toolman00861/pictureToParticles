@@ -6,15 +6,13 @@ type DebugPanelProps = {
   bass: number
   mid: number
   treble: number
-  bassPulse: number
-  treblePulse: number
-  bassDelta: number
-  midDelta: number
-  trebleDelta: number
   spectrumBars: number[]
   hasAudio: boolean
   isPlaying: boolean
   audioName: string
+  weightedInput: number
+  weightedDelta: number
+  highlightPulse: number
   jitterStrength: number
   bassJitterGain: number
   midJitterGain: number
@@ -22,12 +20,16 @@ type DebugPanelProps = {
   audioCurveStrength: number
   audioCurveCenter: number
   audioCurveSlope: number
+  highlightPulseThreshold: number
+  highlightPulseDecay: number
   onBassJitterGainChange: (value: string) => void
   onMidJitterGainChange: (value: string) => void
   onTrebleJitterGainChange: (value: string) => void
   onAudioCurveStrengthChange: (value: string) => void
   onAudioCurveCenterChange: (value: string) => void
   onAudioCurveSlopeChange: (value: string) => void
+  onHighlightPulseThresholdChange: (value: string) => void
+  onHighlightPulseDecayChange: (value: string) => void
   audioDebug: {
     fftSize: number
     smoothing: number
@@ -36,9 +38,7 @@ type DebugPanelProps = {
     midEndIndex: number
     trebleStartIndex: number
     bassPulseThreshold: number
-    treblePulseThreshold: number
     bassPulseDecay: number
-    treblePulseDecay: number
   }
 }
 
@@ -50,15 +50,13 @@ export function DebugPanel({
   bass,
   mid,
   treble,
-  bassPulse,
-  treblePulse,
-  bassDelta,
-  midDelta,
-  trebleDelta,
   spectrumBars,
   hasAudio,
   isPlaying,
   audioName,
+  weightedInput,
+  weightedDelta,
+  highlightPulse,
   jitterStrength,
   bassJitterGain,
   midJitterGain,
@@ -66,12 +64,16 @@ export function DebugPanel({
   audioCurveStrength,
   audioCurveCenter,
   audioCurveSlope,
+  highlightPulseThreshold,
+  highlightPulseDecay,
   onBassJitterGainChange,
   onMidJitterGainChange,
   onTrebleJitterGainChange,
   onAudioCurveStrengthChange,
   onAudioCurveCenterChange,
   onAudioCurveSlopeChange,
+  onHighlightPulseThresholdChange,
+  onHighlightPulseDecayChange,
   audioDebug,
 }: DebugPanelProps) {
   const mapAudioBand = (value: number) => Math.tanh((Math.max(0, value) - audioCurveCenter) * audioCurveSlope) * 0.5 + 0.5
@@ -79,22 +81,10 @@ export function DebugPanel({
   const mappedMid = mapAudioBand(mid)
   const mappedTreble = mapAudioBand(treble)
   const totalGain = bassJitterGain + midJitterGain + trebleJitterGain
-  const weightedInput =
-    totalGain > 0
-      ? (bass * bassJitterGain + mid * midJitterGain + treble * trebleJitterGain) / totalGain
-      : 0
   const weightedMapped = mapAudioBand(weightedInput)
-  const weightedDelta =
-    totalGain > 0
-      ? (bassDelta * bassJitterGain + midDelta * midJitterGain + trebleDelta * trebleJitterGain) / totalGain
-      : 0
   const lowShare = totalGain > 0 ? (bass * bassJitterGain) / totalGain : 0
   const midShare = totalGain > 0 ? (mid * midJitterGain) / totalGain : 0
   const highShare = totalGain > 0 ? (treble * trebleJitterGain) / totalGain : 0
-  const weightedPulse =
-    bassJitterGain + trebleJitterGain > 0
-      ? (bassPulse * bassJitterGain + treblePulse * trebleJitterGain) / (bassJitterGain + trebleJitterGain)
-      : 0
   const estimatedJitter =
     jitterStrength +
     mappedBass * bassJitterGain * audioCurveStrength +
@@ -237,6 +227,34 @@ export function DebugPanel({
               onChange={(event) => onAudioCurveSlopeChange(event.target.value)}
             />
           </label>
+          <label className="slider-control">
+            <span className="slider-control__meta">
+              <span>Highlight Threshold</span>
+              <strong>{highlightPulseThreshold.toFixed(2)}</strong>
+            </span>
+            <input
+              type="range"
+              min="0"
+              max="0.5"
+              step="0.01"
+              value={highlightPulseThreshold}
+              onChange={(event) => onHighlightPulseThresholdChange(event.target.value)}
+            />
+          </label>
+          <label className="slider-control">
+            <span className="slider-control__meta">
+              <span>Highlight Decay</span>
+              <strong>{highlightPulseDecay.toFixed(2)}</strong>
+            </span>
+            <input
+              type="range"
+              min="0.5"
+              max="0.99"
+              step="0.01"
+              value={highlightPulseDecay}
+              onChange={(event) => onHighlightPulseDecayChange(event.target.value)}
+            />
+          </label>
         </div>
 
         <div className="debug-panel__block">
@@ -301,7 +319,7 @@ export function DebugPanel({
           </div>
           <div className="debug-card">
             <span>Weighted Pulse</span>
-            <strong>{weightedPulse.toFixed(3)}</strong>
+            <strong>{highlightPulse.toFixed(3)}</strong>
           </div>
           <div className="debug-card">
             <span>Low Share</span>
@@ -359,16 +377,16 @@ export function DebugPanel({
             <strong>{audioDebug.bassPulseThreshold.toFixed(2)}</strong>
           </div>
           <div className="debug-row">
-            <span>Treble Threshold</span>
-            <strong>{audioDebug.treblePulseThreshold.toFixed(2)}</strong>
+            <span>Highlight Threshold</span>
+            <strong>{highlightPulseThreshold.toFixed(2)}</strong>
           </div>
           <div className="debug-row">
             <span>Bass Decay</span>
             <strong>{audioDebug.bassPulseDecay.toFixed(2)}</strong>
           </div>
           <div className="debug-row">
-            <span>Treble Decay</span>
-            <strong>{audioDebug.treblePulseDecay.toFixed(2)}</strong>
+            <span>Highlight Decay</span>
+            <strong>{highlightPulseDecay.toFixed(2)}</strong>
           </div>
         </div>
 
