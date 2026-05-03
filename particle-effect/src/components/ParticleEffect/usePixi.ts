@@ -6,20 +6,35 @@ import {
   ParticleContainer,
   type Texture,
 } from 'pixi.js'
-import type { ParticleData, SampledImage } from './types'
+import type { AudioReactiveState, ParticleData, SampledImage } from './types'
 
 const GLOW_RADIUS = 6
 const CORE_RADIUS = 1.6
 const PARTICLE_SCALE_FACTOR = 0.18
+const BASE_PARTICLE_ALPHA = 0.62
+const TREBLE_PULSE_SCALE_BOOST = 2
+
+function brightenColor(color: number, intensity: number) {
+  const clampedIntensity = Math.max(0, Math.min(intensity, 1))
+  const red = (color >> 16) & 0xff
+  const green = (color >> 8) & 0xff
+  const blue = color & 0xff
+
+  const nextRed = Math.round(red + (255 - red) * clampedIntensity)
+  const nextGreen = Math.round(green + (255 - green) * clampedIntensity)
+  const nextBlue = Math.round(blue + (255 - blue) * clampedIntensity)
+
+  return (nextRed << 16) | (nextGreen << 8) | nextBlue
+}
 
 function createParticleTexture(app: Application): Texture {
   const glowGraphic = new Graphics()
     .circle(0, 0, GLOW_RADIUS)
-    .fill({ color: 0xffffff, alpha: 0.08 })
+    .fill({ color: 0xffffff, alpha: 1 })
     .circle(0, 0, GLOW_RADIUS * 0.68)
-    .fill({ color: 0xffffff, alpha: 0.16 })
+    .fill({ color: 0xffffff, alpha: 1 })
     .circle(0, 0, GLOW_RADIUS * 0.42)
-    .fill({ color: 0xffffff, alpha: 0.34 })
+    .fill({ color: 0xffffff, alpha: 1 })
     .circle(0, 0, CORE_RADIUS)
     .fill({ color: 0xffffff, alpha: 1 })
 
@@ -39,6 +54,7 @@ type UsePixiOptions = {
   particlesRef: React.RefObject<ParticleData[]>
   particleColor: number
   particleSize: number
+  audioStateRef?: React.RefObject<AudioReactiveState>
   step: (deltaTime?: number) => void
   setMousePosition: (x: number, y: number) => void
   clearMouse: () => void
@@ -49,6 +65,7 @@ export function usePixi({
   particlesRef,
   particleColor,
   particleSize,
+  audioStateRef,
   step,
   setMousePosition,
   clearMouse,
@@ -116,6 +133,10 @@ export function usePixi({
         const container = particleContainerRef.current
         const runtimeParticles = particlesRef.current
         const pixiParticles = pixiParticlesRef.current
+        const treble = audioStateRef?.current?.treble ?? 0
+        const treblePulse = audioStateRef?.current?.treblePulse ?? 0
+        const alpha = 0.4 + treblePulse * 0.6
+        const pulseScale = 1 + treblePulse * TREBLE_PULSE_SCALE_BOOST
 
         if (!container || runtimeParticles.length === 0 || pixiParticles.length === 0) {
           return
@@ -135,6 +156,10 @@ export function usePixi({
 
           pixiParticle.x = runtimeParticle.x
           pixiParticle.y = runtimeParticle.y
+          pixiParticle.alpha = alpha
+          pixiParticle.scaleX = particleSize * PARTICLE_SCALE_FACTOR * pulseScale
+          pixiParticle.scaleY = particleSize * PARTICLE_SCALE_FACTOR * pulseScale
+          pixiParticle.tint = brightenColor(runtimeParticle.color ?? particleColor, treblePulse * 0.9 + treble * 0.2)
         }
       })
     }
@@ -152,7 +177,7 @@ export function usePixi({
       appRef.current?.destroy({ removeView: true }, true)
       appRef.current = null
     }
-  }, [clearMouse, particlesRef, setMousePosition, step])
+  }, [audioStateRef, clearMouse, particleColor, particleSize, particlesRef, setMousePosition, step])
 
   useEffect(() => {
     const app = appRef.current
@@ -174,6 +199,8 @@ export function usePixi({
       texture,
       dynamicProperties: {
         position: true,
+        vertex: true,
+        color: true,
       },
     })
 
@@ -187,6 +214,7 @@ export function usePixi({
           anchorY: 0.5,
           scaleX: particleSize * PARTICLE_SCALE_FACTOR,
           scaleY: particleSize * PARTICLE_SCALE_FACTOR,
+          alpha: BASE_PARTICLE_ALPHA,
           tint: particle.color ?? particleColor,
         }),
     )

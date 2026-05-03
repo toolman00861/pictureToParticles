@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { sampleImageParticles } from './imageSampler'
-import type { ParticleData, SampledImage } from './types'
+import type { AudioReactiveState, ParticleData, SampledImage } from './types'
 
 const VIEWPORT_SAMPLE_WIDTH_RATIO = 1.5
 const VIEWPORT_SAMPLE_HEIGHT_RATIO = 1.5
+const BASS_JITTER_SMOOTHING = 0.12
 
 type UseParticlesOptions = {
   imageSrc: string
@@ -15,6 +16,8 @@ type UseParticlesOptions = {
   damping: number
   repelStrength: number
   jitterStrength: number
+  bassJitterGain: number
+  audioStateRef?: React.RefObject<AudioReactiveState>
 }
 
 type MouseState = {
@@ -33,9 +36,12 @@ export function useParticles({
   damping,
   repelStrength,
   jitterStrength,
+  bassJitterGain,
+  audioStateRef,
 }: UseParticlesOptions) {
   const particlesRef = useRef<ParticleData[]>([])
   const mouseRef = useRef<MouseState>({ x: 0, y: 0, active: false })
+  const smoothedBassRef = useRef(0)
   const [sampledImage, setSampledImage] = useState<SampledImage | null>(null)
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -103,6 +109,9 @@ export function useParticles({
       const mouse = mouseRef.current
       const radiusSquared = mouseRadius * mouseRadius
       const dampingFactor = Math.pow(damping, delta)
+      const bass = audioStateRef?.current?.bass ?? 0
+      smoothedBassRef.current += (bass - smoothedBassRef.current) * BASS_JITTER_SMOOTHING
+      const effectiveJitterStrength = jitterStrength + smoothedBassRef.current * bassJitterGain
 
       for (const particle of particlesRef.current) {
         if (mouse.active) {
@@ -122,8 +131,8 @@ export function useParticles({
           }
         }
 
-        particle.vx += (Math.random() - 0.5) * jitterStrength * delta
-        particle.vy += (Math.random() - 0.5) * jitterStrength * delta
+        particle.vx += (Math.random() - 0.5) * effectiveJitterStrength * delta
+        particle.vy += (Math.random() - 0.5) * effectiveJitterStrength * delta
         particle.vx += (particle.originX - particle.x) * stiffness * delta
         particle.vy += (particle.originY - particle.y) * stiffness * delta
         particle.vx *= dampingFactor
@@ -132,7 +141,7 @@ export function useParticles({
         particle.y += particle.vy * delta
       }
     },
-    [damping, jitterStrength, mouseRadius, repelStrength, stiffness],
+    [audioStateRef, bassJitterGain, damping, jitterStrength, mouseRadius, repelStrength, stiffness],
   )
 
   return {

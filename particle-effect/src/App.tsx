@@ -1,7 +1,9 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import targetImg from './assets/target.png'
 import TopNav from './components/TopNav'
+import DebugPanel from './components/DebugPanel'
 import ParticleEffect from './components/ParticleEffect'
+import { useAudio } from './components/ParticleEffect/useAudio'
 import './App.css'
 
 type ParticleSettings = {
@@ -11,6 +13,7 @@ type ParticleSettings = {
   stiffness: number
   damping: number
   jitterStrength: number
+  bassJitterGain: number
   particleSize: number
   repelStrength: number
 }
@@ -31,6 +34,7 @@ const DEFAULT_PARTICLE_SETTINGS: ParticleSettings = {
   stiffness: 0.001,
   damping: 0.96,
   jitterStrength: 0.4,
+  bassJitterGain: 1,
   particleSize: 2,
   repelStrength: 1,
 }
@@ -50,8 +54,26 @@ const SLIDER_FIELDS: SliderField[] = [
 
 function App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [debugOpen, setDebugOpen] = useState(false)
   const [settings, setSettings] = useState(DEFAULT_PARTICLE_SETTINGS)
   const [uploadedImage, setUploadedImage] = useState<{ src: string; name: string } | null>(null)
+  const [imageReloadVersion, setImageReloadVersion] = useState(0)
+  const {
+    bass,
+    treble,
+    bassPulse,
+    treblePulse,
+    bassDelta,
+    trebleDelta,
+    spectrumBars,
+    audioName,
+    hasAudio,
+    isPlaying,
+    audioStateRef,
+    audioDebug,
+    loadAudio,
+    togglePlayback,
+  } = useAudio()
 
   useEffect(() => {
     return () => {
@@ -64,6 +86,8 @@ function App() {
   const activeImageSrc = uploadedImage?.src ?? targetImg
   const activeImageLabel = uploadedImage?.name ?? 'Default target image'
   const toggleSettings = () => setSettingsOpen((open) => !open)
+  const toggleDebug = () => setDebugOpen((open) => !open)
+  const reloadImage = () => setImageReloadVersion((version) => version + 1)
 
   const sliderItems = useMemo(
     () =>
@@ -104,6 +128,16 @@ function App() {
     event.target.value = ''
   }
 
+  const handleAudioUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) {
+      return
+    }
+
+    await loadAudio(file)
+    event.target.value = ''
+  }
+
   const restoreDefaultImage = () => {
     setUploadedImage((current) => {
       if (current) {
@@ -118,9 +152,11 @@ function App() {
     <main className="app-shell">
       <TopNav items={NAV_ITEMS} />
       <ParticleEffect
+        key={`${activeImageSrc}-${imageReloadVersion}`}
         className="particle-effect"
         imageSrc={activeImageSrc}
         particleColor={0xffffff}
+        audioStateRef={audioStateRef}
         {...settings}
       />
       <section className="settings-dock" aria-label="粒子设置">
@@ -148,6 +184,9 @@ function App() {
               <input type="file" accept="image/*" onChange={handleImageUpload} />
               Upload Image
             </label>
+            <button type="button" className="secondary-button" onClick={reloadImage}>
+              Reload Image
+            </button>
             <button
               type="button"
               className="secondary-button"
@@ -190,6 +229,26 @@ function App() {
           SETTING
         </button>
       </section>
+      <DebugPanel
+        open={debugOpen}
+        onToggle={toggleDebug}
+        onAudioUpload={handleAudioUpload}
+        onTogglePlayback={() => void togglePlayback()}
+        bass={bass}
+        treble={treble}
+        bassPulse={bassPulse}
+        treblePulse={treblePulse}
+        bassDelta={bassDelta}
+        trebleDelta={trebleDelta}
+        spectrumBars={spectrumBars}
+        hasAudio={hasAudio}
+        isPlaying={isPlaying}
+        audioName={audioName}
+        jitterStrength={settings.jitterStrength}
+        bassJitterGain={settings.bassJitterGain}
+        onBassJitterGainChange={(value) => handleSliderChange('bassJitterGain', value)}
+        audioDebug={audioDebug}
+      />
     </main>
   )
 }

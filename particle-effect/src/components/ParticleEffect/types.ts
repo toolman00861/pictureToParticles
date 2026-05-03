@@ -8,6 +8,13 @@ export type ParticleData = {
   color: number
 }
 
+export type AudioReactiveState = {
+  bass: number
+  treble: number
+  bassPulse: number
+  treblePulse: number
+}
+
 export type SampledImage = {
   width: number
   height: number
@@ -22,9 +29,11 @@ export type ParticleEffectProps = {
   stiffness?: number
   damping?: number
   jitterStrength?: number
+  bassJitterGain?: number
   particleSize?: number
   particleColor?: number
   alphaThreshold?: number
   repelStrength?: number
+  audioStateRef?: React.RefObject<AudioReactiveState>
   className?: string
 }

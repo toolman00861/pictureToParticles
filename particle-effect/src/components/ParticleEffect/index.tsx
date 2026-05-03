@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useParticles } from './useParticles'
 import { usePixi } from './usePixi'
 import type { ParticleEffectProps } from './types'
@@ -9,6 +9,7 @@ const DEFAULT_MOUSE_RADIUS = 80
 const DEFAULT_STIFFNESS = 0.05
 const DEFAULT_DAMPING = 0.85
 const DEFAULT_JITTER_STRENGTH = 0.3
+const DEFAULT_BASS_JITTER_GAIN = 1
 const DEFAULT_PARTICLE_SIZE = 1.5
 const DEFAULT_PARTICLE_COLOR = 0xffffff
 const DEFAULT_ALPHA_THRESHOLD = 128
@@ -22,10 +23,12 @@ export function ParticleEffect({
   stiffness = DEFAULT_STIFFNESS,
   damping = DEFAULT_DAMPING,
   jitterStrength = DEFAULT_JITTER_STRENGTH,
+  bassJitterGain = DEFAULT_BASS_JITTER_GAIN,
   particleSize = DEFAULT_PARTICLE_SIZE,
   particleColor = DEFAULT_PARTICLE_COLOR,
   alphaThreshold = DEFAULT_ALPHA_THRESHOLD,
   repelStrength = DEFAULT_REPEL_STRENGTH,
+  audioStateRef,
   className,
 }: ParticleEffectProps) {
   const sectionRef = useRef<HTMLElement | null>(null)
@@ -44,6 +47,8 @@ export function ParticleEffect({
     damping,
     repelStrength,
     jitterStrength,
+    bassJitterGain,
+    audioStateRef,
   })
 
   const { hostRef } = usePixi({
@@ -51,6 +56,7 @@ export function ParticleEffect({
     particlesRef: particles.particlesRef,
     particleColor,
     particleSize,
+    audioStateRef,
     step: particles.step,
     setMousePosition: particles.setMousePosition,
     clearMouse: particles.clearMouse,
