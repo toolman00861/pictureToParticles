@@ -9,6 +9,12 @@
 
 ## 启动方式
 
+进入项目目录：
+
+```bash
+cd particle-effect
+```
+
 安装依赖：
 
 ```bash
