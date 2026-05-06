@@ -4,6 +4,7 @@ import TopNav from './components/TopNav'
 import DebugPanel from './components/DebugPanel'
 import ParticleEffect from './components/ParticleEffect'
 import { useAudio } from './components/ParticleEffect/useAudio'
+import { Analytics } from '@vercel/analytics/react'
 import './App.css'
 
 type ParticleSettings = {
@@ -320,6 +321,7 @@ function App() {
         onHighlightFlashRatioChange={(value) => handleSliderChange('highlightFlashRatio', value)}
         audioDebug={audioDebug}
       />
+      <Analytics />
     </main>
   )
 }
