@@ -86,6 +86,21 @@ export function usePixi({
   const highlightCoreParticlesRef = useRef<PixiParticle[]>([])
   const lastHighlightTriggerIdRef = useRef(0)
   const highlightMaskRef = useRef<Uint8Array>(new Uint8Array(0))
+  const stepRef = useRef(step)
+  const setMousePositionRef = useRef(setMousePosition)
+  const clearMouseRef = useRef(clearMouse)
+  const particleColorRef = useRef(particleColor)
+  const particleSizeRef = useRef(particleSize)
+  const highlightFlashRatioRef = useRef(highlightFlashRatio)
+
+  useEffect(() => {
+    stepRef.current = step
+    setMousePositionRef.current = setMousePosition
+    clearMouseRef.current = clearMouse
+    particleColorRef.current = particleColor
+    particleSizeRef.current = particleSize
+    highlightFlashRatioRef.current = highlightFlashRatio
+  }, [clearMouse, highlightFlashRatio, particleColor, particleSize, setMousePosition, step])
 
   useEffect(() => {
     const host = hostRef.current
@@ -121,7 +136,7 @@ export function usePixi({
         const rect = app.canvas.getBoundingClientRect()
         const localX = event.clientX - rect.left - app.renderer.width / 2
         const localY = event.clientY - rect.top - app.renderer.height / 2
-        setMousePosition(localX, localY)
+        setMousePositionRef.current(localX, localY)
       }
 
       const handlePointerMove = (event: PointerEvent) => {
@@ -129,7 +144,7 @@ export function usePixi({
       }
 
       const handlePointerLeave = () => {
-        clearMouse()
+        clearMouseRef.current()
       }
 
       app.canvas.addEventListener('pointermove', handlePointerMove)
@@ -163,7 +178,7 @@ export function usePixi({
         if (highlightTriggerId !== lastHighlightTriggerIdRef.current) {
           lastHighlightTriggerIdRef.current = highlightTriggerId
           const nextMask = new Uint8Array(pixiParticles.length)
-          const flashCount = Math.max(1, Math.round(pixiParticles.length * highlightFlashRatio))
+          const flashCount = Math.max(1, Math.round(pixiParticles.length * highlightFlashRatioRef.current))
 
           for (let picked = 0; picked < flashCount; ) {
             const randomIndex = Math.floor(Math.random() * pixiParticles.length)
@@ -180,7 +195,7 @@ export function usePixi({
         container.y = app.renderer.height / 2
         highlightCoreContainer.x = app.renderer.width / 2
         highlightCoreContainer.y = app.renderer.height / 2
-        step(ticker.deltaTime)
+        stepRef.current(ticker.deltaTime)
 
         for (let index = 0; index < pixiParticles.length; index += 1) {
           const runtimeParticle = runtimeParticles[index]
@@ -192,20 +207,22 @@ export function usePixi({
           }
 
           const flashPulse = highlightMaskRef.current[index] ? highlightPulse : 0
+          const currentParticleSize = particleSizeRef.current
+          const currentParticleColor = particleColorRef.current
           pixiParticle.x = runtimeParticle.x
           pixiParticle.y = runtimeParticle.y
           pixiParticle.alpha = BASE_PARTICLE_ALPHA
-          pixiParticle.scaleX = particleSize * PARTICLE_SCALE_FACTOR
-          pixiParticle.scaleY = particleSize * PARTICLE_SCALE_FACTOR
-          pixiParticle.tint = runtimeParticle.color ?? particleColor
+          pixiParticle.scaleX = currentParticleSize * PARTICLE_SCALE_FACTOR
+          pixiParticle.scaleY = currentParticleSize * PARTICLE_SCALE_FACTOR
+          pixiParticle.tint = runtimeParticle.color ?? currentParticleColor
 
           highlightCoreParticle.x = runtimeParticle.x
           highlightCoreParticle.y = runtimeParticle.y
           highlightCoreParticle.alpha = flashPulse * 0.98
           highlightCoreParticle.scaleX =
-            particleSize * HIGHLIGHT_CORE_SCALE_FACTOR * (1 + flashPulse * HIGHLIGHT_CORE_SCALE_BOOST)
+            currentParticleSize * HIGHLIGHT_CORE_SCALE_FACTOR * (1 + flashPulse * HIGHLIGHT_CORE_SCALE_BOOST)
           highlightCoreParticle.scaleY =
-            particleSize * HIGHLIGHT_CORE_SCALE_FACTOR * (1 + flashPulse * HIGHLIGHT_CORE_SCALE_BOOST)
+            currentParticleSize * HIGHLIGHT_CORE_SCALE_FACTOR * (1 + flashPulse * HIGHLIGHT_CORE_SCALE_BOOST)
           highlightCoreParticle.tint = 0xffffff
         }
       })
@@ -231,13 +248,7 @@ export function usePixi({
     }
   }, [
     audioStateRef,
-    clearMouse,
-    highlightFlashRatio,
-    particleColor,
-    particleSize,
     particlesRef,
-    setMousePosition,
-    step,
   ])
 
   useEffect(() => {
@@ -287,10 +298,10 @@ export function usePixi({
           y: particle.y,
           anchorX: 0.5,
           anchorY: 0.5,
-          scaleX: particleSize * PARTICLE_SCALE_FACTOR,
-          scaleY: particleSize * PARTICLE_SCALE_FACTOR,
+          scaleX: particleSizeRef.current * PARTICLE_SCALE_FACTOR,
+          scaleY: particleSizeRef.current * PARTICLE_SCALE_FACTOR,
           alpha: BASE_PARTICLE_ALPHA,
-          tint: particle.color ?? particleColor,
+          tint: particle.color ?? particleColorRef.current,
         }),
     )
     const highlightCoreParticles = sampledImage.particles.map(
@@ -301,8 +312,8 @@ export function usePixi({
           y: particle.y,
           anchorX: 0.5,
           anchorY: 0.5,
-          scaleX: particleSize * HIGHLIGHT_CORE_SCALE_FACTOR,
-          scaleY: particleSize * HIGHLIGHT_CORE_SCALE_FACTOR,
+          scaleX: particleSizeRef.current * HIGHLIGHT_CORE_SCALE_FACTOR,
+          scaleY: particleSizeRef.current * HIGHLIGHT_CORE_SCALE_FACTOR,
           alpha: 0,
           tint: 0xffffff,
         }),
@@ -321,7 +332,7 @@ export function usePixi({
     highlightCoreContainerRef.current = highlightCoreContainer
     pixiParticlesRef.current = pixiParticles
     highlightCoreParticlesRef.current = highlightCoreParticles
-  }, [particleColor, particleSize, sampledImage])
+  }, [sampledImage])
 
   return {
     hostRef,
