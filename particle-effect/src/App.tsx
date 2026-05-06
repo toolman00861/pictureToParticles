@@ -5,6 +5,7 @@ import DebugPanel from './components/DebugPanel'
 import ParticleEffect from './components/ParticleEffect'
 import { useAudio } from './components/ParticleEffect/useAudio'
 import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import './App.css'
 
 type ParticleSettings = {
@@ -322,6 +323,7 @@ function App() {
         audioDebug={audioDebug}
       />
       <Analytics />
+      <SpeedInsights />
     </main>
   )
 }
